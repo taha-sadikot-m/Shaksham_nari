@@ -441,4 +441,4 @@ def find_schemes_endpoint():
         return jsonify({"error": "Failed to find schemes from the AI. Please try again."}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',port=3000)
+    app.run(host='0.0.0.0')
