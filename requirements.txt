@@ -1,5 +1,5 @@
 flask
 groq
-google-generativeai
+google-genai
 pymongo
 gunicorn
