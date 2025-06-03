@@ -1,0 +1,1344 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Advisor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2a5298);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 90vh;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            color: white;
+        }
+        
+        header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto;
+            opacity: 0.9;
+        }
+        
+        .app-container {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            margin-bottom: 30px;
+        }
+        
+        .profile-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 35%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 65%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #2a5298;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            font-size: 1.3rem;
+        }
+        
+        .step-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .step-message {
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            color: #444;
+            line-height: 1.6;
+        }
+        
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .option-btn {
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .option-btn:hover {
+            background: #1a3a7c;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .option-btn:active {
+            transform: translateY(0);
+        }
+        
+        .dashboard-buttons {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .dashboard-btn {
+            background: #4a6fc5;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .dashboard-btn:hover {
+            background: #3a5fb5;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .dashboard-btn.reset {
+            background: #e74c3c;
+        }
+        
+        .dashboard-btn.reset:hover {
+            background: #c0392b;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 400px;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 12px;
+            max-width: 80%;
+            line-height: 1.5;
+            position: relative;
+        }
+        
+        .user-message {
+            background: #e3f2fd;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+        
+        .bot-message {
+            background: #f0f7ff;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+        
+        .message-time {
+            font-size: 0.7rem;
+            color: #777;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        
+        .chat-input button {
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0 25px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .chat-input button:hover {
+            background: #1a3a7c;
+        }
+        
+        .user-profile {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+        
+        .profile-item {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            position: relative;
+        }
+        
+        .profile-label {
+            font-weight: 600;
+            width: 40%;
+            color: #555;
+        }
+        
+        .profile-value {
+            flex: 1;
+            color: #2a5298;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .profile-value:hover {
+            color: #1a3a7c;
+            text-decoration: underline;
+        }
+        
+        .edit-icon {
+            position: absolute;
+            right: 0;
+            top: 0;
+            color: #777;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        .edit-icon:hover {
+            color: #2a5298;
+        }
+        
+        .edit-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            color: #2a5298;
+            font-weight: 600;
+        }
+        
+        .close-modal {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #777;
+        }
+        
+        .close-modal:hover {
+            color: #333;
+        }
+        
+        .modal-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .modal-option {
+            background: #e3f2fd;
+            border: 2px solid #2a5298;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .modal-option:hover, .modal-option.selected {
+            background: #2a5298;
+            color: white;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .modal-save {
+            background: #2a5298;
+            color: white;
+        }
+        
+        .modal-save:hover {
+            background: #1a3a7c;
+        }
+        
+        .modal-cancel {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .modal-cancel:hover {
+            background: #e0e0e0;
+        }
+        
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loader .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2a5298;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .typing-indicator {
+            display: none;
+            background: #f0f7ff;
+            padding: 10px 15px;
+            border-radius: 20px;
+            align-self: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            float: left;
+            margin: 0 1px;
+            background-color: #9E9EA1;
+            display: block;
+            border-radius: 50%;
+            opacity: 0.4;
+        }
+        
+        .typing-indicator span:nth-of-type(1) {
+            animation: typing 1s infinite;
+        }
+        
+        .typing-indicator span:nth-of-type(2) {
+            animation: typing 1s infinite 0.2s;
+        }
+        
+        .typing-indicator span:nth-of-type(3) {
+            animation: typing 1s infinite 0.4s;
+        }
+        
+        @keyframes typing {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .profile-section, .chat-section {
+                width: 100%;
+            }
+            
+            header h1 {
+                font-size: 2.2rem;
+            }
+            
+            header p {
+                font-size: 1rem;
+            }
+
+
+        }
+
+        .chat-tabs {
+            display: flex;
+            background: #f0f7ff;
+            border-radius: 10px 10px 0 0;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .chat-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            background: #d0e0f0;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .chat-tab.active {
+            background: white;
+            border-bottom: 3px solid #2a5298;
+            font-weight: 600;
+        }
+        
+        .chat-tab:hover:not(.active) {
+            background: #e0e8f0;
+        }
+        
+        .chat-container {
+            display: none;
+        }
+        
+        .chat-container.active {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        
+        .sources-container {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 3px solid #2a5298;
+        }
+        
+        .sources-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2a5298;
+        }
+        
+        .source-item {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .source-link {
+            color: #1a5298;
+            text-decoration: none;
+            margin-left: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+        
+        .source-link:hover {
+            text-decoration: underline;
+        }
+        
+        .source-icon {
+            color: #2a5298;
+        }
+
+        .bot-message {
+        white-space: pre-wrap; /* Preserve line breaks */
+        word-break: break-word; /* Prevent horizontal overflow */
+        line-height: 1.5;
+        padding: 12px 16px;
+    }
+
+    .bot-message strong {
+        color: #2a5298;
+    }
+
+    .bot-message br {
+        content: "";
+        display: block;
+        margin-bottom: 0.5em;
+    }
+
+    .bot-message {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+}
+
+.bot-message h1, .bot-message h2, .bot-message h3 {
+    color: #2a5298;
+    margin: 1em 0 0.5em;
+}
+
+.bot-message p {
+    margin: 0 0 1em;
+}
+
+.bot-message ul, .bot-message ol {
+    margin: 0 0 1em 1.5em;
+    padding: 0;
+}
+
+.bot-message li {
+    margin: 0.25em 0;
+}
+
+.bot-message code {
+    background: #f3f3f3;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: Consolas, Monaco, 'Andale Mono', monospace;
+}
+
+.bot-message pre {
+    background: #f8f8f8;
+    padding: 1em;
+    border-radius: 5px;
+    overflow-x: auto;
+    margin: 1em 0;
+}
+
+.bot-message pre code {
+    background: none;
+    padding: 0;
+}
+
+.bot-message a {
+    color: #2a5298;
+    text-decoration: underline;
+}
+
+.bot-message table {
+    border-collapse: collapse;
+    margin: 1em 0;
+}
+
+.bot-message th, .bot-message td {
+    border: 1px solid #ddd;
+    padding: 0.5em;
+}
+
+.bot-message blockquote {
+    border-left: 3px solid #ddd;
+    margin: 1em 0;
+    padding-left: 1em;
+    color: #666;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-user"></i> Shaksham Nari</h1>
+            <p>Get personalized investment advice based on your financial profile</p>
+        </header>
+        
+        <div class="app-container">
+            <div class="profile-section">
+                <h2 class="section-title"><i class="fas fa-user"></i> Your Profile</h2>
+                
+                <div class="user-profile" id="profileDisplay">
+                    <!-- Profile data will be inserted here -->
+                </div>
+                
+                <h2 class="section-title"><i class="fas fa-cogs"></i> Setup</h2>
+                
+                <div class="step-container" id="stepContainer">
+                    <div class="loader" id="loader">
+                        <div class="spinner"></div>
+                        <p>Processing your request...</p>
+                    </div>
+                    <!-- Step content will be inserted here -->
+                </div>
+            </div>
+            
+        <!-- Updated chat section with tabs -->
+            <div class="chat-section">
+                <h2 class="section-title"><i class="fas fa-comments"></i> Ask Questions</h2>
+                
+                <!-- Chat Tabs -->
+                <div class="chat-tabs">
+                    <div class="chat-tab active" data-tab="investment">Investment Advice</div>
+                    <div class="chat-tab" data-tab="financial">Financial Questions</div>
+                    <div class="chat-tab" data-tab="schemes">Find Schemes</div>
+                </div>
+                
+                <!-- Investment Advice Chat (existing) -->
+                <div class="chat-container active" id="investmentChat">
+                    <div class="chat-messages" id="investmentMessages">
+                        <div class="message bot-message">
+                            Hello! I'm your investment advisor. How can I help you today?
+                            <div class="message-time">Just now</div>
+                        </div>
+                    </div>
+                    
+                    <div class="typing-indicator" id="investmentTyping">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    
+                    <div class="chat-input">
+                        <input type="text" id="investmentInput" placeholder="Ask an investment-related question...">
+                        <button id="investmentSend"><i class="fas fa-paper-plane"></i> Send</button>
+                    </div>
+                </div>
+                
+                <!-- Financial Questions Chat (new) -->
+                <div class="chat-container" id="financialChat">
+                    <div class="chat-messages" id="financialMessages">
+                        <div class="message bot-message">
+                            Ask me any financial question! I'll provide the latest information with sources.
+                            <div class="message-time">Just now</div>
+                        </div>
+                    </div>
+                    
+                    <div class="typing-indicator" id="financialTyping">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    
+                    <div class="chat-input">
+                        <input type="text" id="financialInput" placeholder="Ask a financial question...">
+                        <button id="financialSend"><i class="fas fa-paper-plane"></i> Send</button>
+                    </div>
+                </div>
+                
+                <!-- Scheme Finder Chat (new) -->
+                <div class="chat-container" id="schemesChat">
+                    <div class="chat-messages" id="schemesMessages">
+                        <div class="message bot-message">
+                            Tell me about your situation and I'll find relevant government schemes for you!
+                            <div class="message-time">Just now</div>
+                        </div>
+                    </div>
+                    
+                    <div class="typing-indicator" id="schemesTyping">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    
+                    <div class="chat-input">
+                        <input type="text" id="schemesInput" placeholder="Describe your situation or needs...">
+                        <button id="schemesSend"><i class="fas fa-paper-plane"></i> Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Profile Modal -->
+    <div class="edit-modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Edit Field</div>
+                <div class="close-modal" id="closeModal">&times;</div>
+            </div>
+            <div id="modalBody">
+                <!-- Modal content will be inserted here -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const stepContainer = document.getElementById('stepContainer');
+            // const chatMessages = document.getElementById('chatMessages'); // Will be replaced
+            // const questionInput = document.getElementById('questionInput'); // Will be replaced
+            // const sendButton = document.getElementById('sendButton'); // Will be replaced
+            const loader = document.getElementById('loader');
+            const profileDisplay = document.getElementById('profileDisplay');
+            // const typingIndicator = document.getElementById('typingIndicator'); // Will be replaced
+            const editModal = document.getElementById('editModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            const closeModal = document.getElementById('closeModal');
+
+            // Investment Chat Elements
+            const investmentMessages = document.getElementById('investmentMessages');
+            const investmentInput = document.getElementById('investmentInput');
+            const investmentSend = document.getElementById('investmentSend');
+            const investmentTyping = document.getElementById('investmentTyping');
+
+            // Financial Questions Chat Elements
+            const financialMessages = document.getElementById('financialMessages');
+            const financialInput = document.getElementById('financialInput');
+            const financialSend = document.getElementById('financialSend');
+            const financialTyping = document.getElementById('financialTyping');
+
+            // Schemes Chat Elements
+            const schemesMessages = document.getElementById('schemesMessages');
+            const schemesInput = document.getElementById('schemesInput');
+            const schemesSend = document.getElementById('schemesSend');
+            const schemesTyping = document.getElementById('schemesTyping');
+
+            const chatTabs = document.querySelectorAll('.chat-tab');
+            const chatContainers = document.querySelectorAll('.chat-container');
+            
+            let currentStep = null;
+            let currentUserData = {};
+            
+            // Field options mapping
+            const fieldOptions = {
+                gender: ['Male', 'Female', 'Other'],
+                age_group: ['< 18', '18-25', '26-35', '36-45', '46-60', '> 60'],
+                salary: ['< 3 lakh', '3-7 lakh', '7-10 lakh', '10-12 lakh', '> 12 lakh'],
+                education: ['Primary', 'Secondary', "Bachelor's", "Master's", 'PhD'],
+                investment: ['📊 Equity', '🏦 Debt Investment', '🏠 Real Estate'],
+                equity_risk_tolerance: ['Low', 'Medium', 'High'],
+                debt_investment_type: ['Bonds', 'Fixed Deposits', 'Other'],
+                real_estate_property_type: ['Residential', 'Commercial']
+            };
+            
+            // Field display names
+            const fieldLabels = {
+                gender: 'Gender',
+                age_group: 'Age Group',
+                salary: 'Salary Range',
+                education: 'Education Level',
+                investment: 'Investment Interest',
+                equity_risk_tolerance: 'Risk Tolerance',
+                debt_investment_type: 'Debt Type',
+                real_estate_property_type: 'Property Type'
+            };
+            
+            // Initialize the application
+            initApp();
+            
+            async function initApp() {
+                showLoader();
+                try {
+                    const response = await fetch('/api/start', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    hideLoader();
+                    
+                    if (data.status === 'existing') {
+                        currentUserData = data.user;
+                        renderDashboard();
+                        renderProfile(currentUserData);
+                    } else {
+                        renderStep('gender', data.message, fieldOptions.gender);
+                    }
+                } catch (error) {
+                    hideLoader();
+                    alert('Error starting application. Please refresh the page.');
+                    console.error('Error:', error);
+                }
+            }
+            
+            function renderProfile(userData) {
+                let profileHtml = '';
+                
+                // Create profile items for each field
+                for (const [field, label] of Object.entries(fieldLabels)) {
+                    if (userData[field]) {
+                        profileHtml += `
+                            <div class="profile-item">
+                                <div class="profile-label">${label}:</div>
+                                <div class="profile-value" data-field="${field}">
+                                    ${userData[field]}
+                                </div>
+                                <div class="edit-icon" data-field="${field}">
+                                    <i class="fas fa-edit"></i>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                profileDisplay.innerHTML = profileHtml;
+                
+                // Add event listeners to profile values and edit icons
+                document.querySelectorAll('.profile-value').forEach(el => {
+                    el.addEventListener('click', function() {
+                        const field = this.getAttribute('data-field');
+                        openEditModal(field, currentUserData[field]);
+                    });
+                });
+                
+                document.querySelectorAll('.edit-icon').forEach(el => {
+                    el.addEventListener('click', function() {
+                        const field = this.getAttribute('data-field');
+                        openEditModal(field, currentUserData[field]);
+                    });
+                });
+            }
+            
+            function openEditModal(field, currentValue) {
+                modalTitle.textContent = `Edit ${fieldLabels[field]}`;
+                
+                let modalContent = '';
+                
+                if (fieldOptions[field]) {
+                    modalContent = `
+                        <div class="modal-options" id="modalOptions">
+                            ${fieldOptions[field].map(option => `
+                                <div class="modal-option ${option === currentValue ? 'selected' : ''}" 
+                                     data-value="${option}">
+                                    ${option}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    modalContent = `
+                        <input type="text" id="textInput" value="${currentValue}" 
+                               class="chat-input" style="width: 100%; padding: 12px; margin: 10px 0;">
+                    `;
+                }
+                
+                modalContent += `
+                    <div class="modal-actions">
+                        <button class="modal-btn modal-cancel" id="modalCancel">Cancel</button>
+                        <button class="modal-btn modal-save" id="modalSave">Save</button>
+                    </div>
+                `;
+                
+                modalBody.innerHTML = modalContent;
+                editModal.style.display = 'flex';
+                
+                // Add event listeners to modal options
+                if (fieldOptions[field]) {
+                    document.querySelectorAll('.modal-option').forEach(option => {
+                        option.addEventListener('click', function() {
+                            document.querySelectorAll('.modal-option').forEach(el => {
+                                el.classList.remove('selected');
+                            });
+                            this.classList.add('selected');
+                        });
+                    });
+                }
+                
+                // Add event listeners to modal buttons
+                document.getElementById('modalCancel').addEventListener('click', closeEditModal);
+                document.getElementById('modalSave').addEventListener('click', () => {
+                    saveFieldUpdate(field);
+                });
+            }
+            
+            function closeEditModal() {
+                editModal.style.display = 'none';
+            }
+            
+            async function saveFieldUpdate(field) {
+                let newValue;
+                
+                if (fieldOptions[field]) {
+                    const selectedOption = document.querySelector('.modal-option.selected');
+                    if (!selectedOption) {
+                        alert('Please select an option');
+                        return;
+                    }
+                    newValue = selectedOption.getAttribute('data-value');
+                } else {
+                    newValue = document.getElementById('textInput').value;
+                }
+                
+                showLoader();
+                closeEditModal();
+                
+                try {
+                    const response = await fetch('/api/update_field', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            field: field,
+                            value: newValue
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    hideLoader();
+                    
+                    if (data.status === 'updated') {
+                        // Update local data
+                        currentUserData[field] = newValue;
+                        
+                        // Re-render profile
+                        renderProfile(currentUserData);
+                        
+                        // Show success message in the active chat or a default one
+                        // For simplicity, adding to investment chat for now, or make it smarter
+                        addBotMessage(data.message, 'investmentMessages'); 
+                        
+                        // Handle investment field updates
+                        if (field === 'investment') {
+                            // Render the investment-specific step
+                            renderStep(data.next_step, data.message, data.options);
+                        }
+                    } else if (data.next_step) {
+                        // Handle investment field updates that require next step
+                        renderStep(data.next_step, data.message, data.options);
+                    } else {
+                        alert('Error updating field');
+                    }
+                } catch (error) {
+                    hideLoader();
+                    alert('Error updating field. Please try again.');
+                    console.error('Error:', error);
+                }
+            }
+            
+            function renderStep(step, message, options) {
+                currentStep = step;
+                
+                stepContainer.innerHTML = `
+                    <div class="step-message">${message}</div>
+                    <div class="options-container" id="optionsContainer"></div>
+                `;
+                
+                const optionsContainer = document.getElementById('optionsContainer');
+                
+                options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.className = 'option-btn';
+                    button.textContent = option;
+                    button.addEventListener('click', () => handleOptionSelect(option));
+                    optionsContainer.appendChild(button);
+                });
+            }
+            
+            async function handleOptionSelect(option) {
+                showLoader();
+                
+                try {
+                    const response = await fetch('/api/step', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            step: currentStep,
+                            answer: option
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    hideLoader();
+                    
+                    if (data.next_step === 'dashboard') {
+                        renderDashboard();
+                        
+                        // Update user data
+                        currentUserData[currentStep] = option;
+                        renderProfile(currentUserData);
+                        
+                        // Add a confirmation message to chat
+                        addBotMessage(data.message, 'investmentMessages'); // Or active chat
+                    } else {
+                        renderStep(data.next_step, data.message, data.options);
+                    }
+                } catch (error) {
+                    hideLoader();
+                    alert('Error processing your selection. Please try again.');
+                    console.error('Error:', error);
+                }
+            }
+            
+            function renderDashboard() {
+                stepContainer.innerHTML = `
+                    <div class="step-message">Your profile is complete! You can:</div>
+                    <div class="dashboard-buttons">
+                        <button class="dashboard-btn" id="updateKnowledgeBtn">
+                            <i class="fas fa-sync-alt"></i> Update Knowledge Level
+                        </button>
+                        <button class="dashboard-btn reset" id="resetBtn">
+                            <i class="fas fa-redo"></i> Reset Profile
+                        </button>
+                    </div>
+                `;
+                
+                document.getElementById('updateKnowledgeBtn').addEventListener('click', () => {
+                    addBotMessage("What would you like to update in your knowledge level?");
+                });
+                
+                document.getElementById('resetBtn').addEventListener('click', resetProfile);
+            }
+            
+            async function resetProfile() {
+                if (!confirm("Are you sure you want to reset your profile? This will delete all your data.")) {
+                    return;
+                }
+                
+                showLoader();
+                
+                try {
+                    const response = await fetch('/api/reset', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    hideLoader();
+                    
+                    renderStep('gender', data.message, fieldOptions.gender);
+                    profileDisplay.innerHTML = '';
+                    currentUserData = {};
+                    
+                    // Add reset notification to chat
+                    addBotMessage("Your profile has been reset. Please provide your information again.", 'investmentMessages'); // Or active chat
+                } catch (error) {
+                    hideLoader();
+                    alert('Error resetting profile. Please try again.');
+                    console.error('Error:', error);
+                }
+            }
+            
+            function addMessage(text, sender, messageAreaId) {
+                const messageArea = document.getElementById(messageAreaId);
+                if (!messageArea) {
+                    console.error("Message area not found:", messageAreaId);
+                    return;
+                }
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                
+                // Sanitize text before inserting (basic example)
+                const textNode = document.createTextNode(text);
+                messageDiv.appendChild(textNode);
+
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'message-time';
+                timeDiv.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                messageDiv.appendChild(timeDiv);
+                messageArea.appendChild(messageDiv);
+                messageArea.scrollTop = messageArea.scrollHeight;
+            }
+
+            function addUserMessage(text, messageAreaId) {
+                addMessage(text, 'user', messageAreaId);
+            }
+
+            function addBotMessage(text, messageAreaId, sources = []) {
+                const messageArea = document.getElementById(messageAreaId);
+                 if (!messageArea) {
+                    console.error("Message area not found for bot:", messageAreaId);
+                    return;
+                }
+                // Sanitize and render markdown
+                const dirtyHtml = marked.parse(text);
+                const cleanHtml = DOMPurify.sanitize(dirtyHtml, {
+                    USE_PROFILES: { html: true },
+                    ADD_TAGS: ['iframe'],  // If you need to allow specific embeds
+                    ADD_ATTR: ['allow', 'frameborder', 'allowfullscreen']
+                });
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message bot-message';
+                messageDiv.innerHTML = cleanHtml;
+
+                
+                
+                
+
+                if (sources && sources.length > 0) {
+                    const sourcesContainer = document.createElement('div');
+                    sourcesContainer.className = 'sources-container';
+                    const sourcesTitle = document.createElement('div');
+                    sourcesTitle.className = 'sources-title';
+                    sourcesTitle.textContent = 'Sources:';
+                    sourcesContainer.appendChild(sourcesTitle);
+
+                    sources.forEach(source => {
+                        const sourceItem = document.createElement('div');
+                        sourceItem.className = 'source-item';
+                        
+                        const icon = document.createElement('i');
+                        icon.className = 'fas fa-link source-icon';
+                        sourceItem.appendChild(icon);
+
+                        const link = document.createElement('a');
+                        link.href = source.uri;
+                        link.textContent = source.title || source.uri;
+                        link.target = '_blank';
+                        link.className = 'source-link';
+                        sourceItem.appendChild(link);
+                        sourcesContainer.appendChild(sourceItem);
+                    });
+                    messageDiv.appendChild(sourcesContainer);
+                }
+                
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'message-time';
+                timeDiv.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                messageDiv.appendChild(timeDiv);
+                messageArea.appendChild(messageDiv);
+                messageArea.scrollTop = messageArea.scrollHeight;
+                
+            }
+
+            function showTypingIndicator(typingIndicatorId) {
+                const indicator = document.getElementById(typingIndicatorId);
+                if(indicator) indicator.style.display = 'block';
+            }
+
+            function hideTypingIndicator(typingIndicatorId) {
+                 const indicator = document.getElementById(typingIndicatorId);
+                if(indicator) indicator.style.display = 'none';
+            }
+            
+            function showLoader() {
+                loader.style.display = 'block';
+            }
+            
+            function hideLoader() {
+                loader.style.display = 'none';
+            }
+
+            // Tab switching logic
+            chatTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    chatTabs.forEach(t => t.classList.remove('active'));
+                    chatContainers.forEach(c => c.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.tab + 'Chat').classList.add('active');
+                });
+            });
+
+            // Event Listeners for each chat
+            investmentSend.addEventListener('click', () => sendInvestmentQuestion());
+            investmentInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendInvestmentQuestion();
+            });
+
+            financialSend.addEventListener('click', () => sendFinancialQuestion());
+            financialInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendFinancialQuestion();
+            });
+
+            schemesSend.addEventListener('click', () => sendSchemeQuery());
+            schemesInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendSchemeQuery();
+            });
+
+
+            async function sendInvestmentQuestion() {
+                const question = investmentInput.value.trim();
+                if (!question) return;
+                
+                addUserMessage(question, 'investmentMessages');
+                investmentInput.value = '';
+                showTypingIndicator('investmentTyping');
+                
+                try {
+                    const response = await fetch('/api/ask', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ question: question })
+                    });
+                    
+                    const data = await response.json();
+                    console.log('Investment response:', data);
+                    hideTypingIndicator('investmentTyping');
+                    
+                    if (data.text) {
+                        addBotMessage(data.text, 'investmentMessages');
+                    } else {
+                        addBotMessage('Sorry, I couldn\'t get a response. Please try again.', 'investmentMessages');
+                    }
+                } catch (error) {
+                    hideTypingIndicator('investmentTyping');
+                    addBotMessage('Error communicating with the server. Please try again later.', 'investmentMessages');
+                    console.error('Error:', error);
+                }
+            }
+
+            async function sendFinancialQuestion() {
+                const question = financialInput.value.trim();
+                if (!question) return;
+
+                addUserMessage(question, 'financialMessages');
+                financialInput.value = '';
+                showTypingIndicator('financialTyping');
+
+                try {
+                    const response = await fetch('/api/ask_financial_question', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ question: question })
+                    });
+                    const data = await response.json();
+                    console.log('Investment response:', data);
+                    hideTypingIndicator('financialTyping');
+                    if (data.text) {
+                        addBotMessage(data.text, 'financialMessages', data.sources);
+                    } else {
+                        addBotMessage(data.error || 'Sorry, I couldn\'t get a response.', 'financialMessages');
+                    }
+                } catch (error) {
+                    hideTypingIndicator('financialTyping');
+                    addBotMessage('Error: Could not reach the financial advice service.', 'financialMessages');
+                    console.error('Financial question error:', error);
+                }
+            }
+
+            async function sendSchemeQuery() {
+                const details = schemesInput.value.trim();
+                if (!details) return;
+
+                addUserMessage(details, 'schemesMessages');
+                schemesInput.value = '';
+                showTypingIndicator('schemesTyping');
+
+                try {
+                    const response = await fetch('/api/find_schemes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ details: details })
+                    });
+                    const data = await response.json();
+                    console.log('Investment response:', data);
+                    hideTypingIndicator('schemesTyping');
+                    if (data.text) {
+                        addBotMessage(data.text, 'schemesMessages', data.sources);
+                    } else {
+                        addBotMessage(data.error || 'Sorry, I couldn\'t find any schemes based on your input.', 'schemesMessages');
+                    }
+                } catch (error) {
+                    hideTypingIndicator('schemesTyping');
+                    addBotMessage('Error: Could not reach the scheme finding service.', 'schemesMessages');
+                    console.error('Scheme query error:', error);
+                }
+            }
+            
+            // Close modal if clicked outside
+            editModal.addEventListener('click', function(event) {
+                if (event.target === editModal) {
+                    closeEditModal();
+                }
+            });
+            closeModal.addEventListener('click', closeEditModal);
+
+        });
+    </script>
+</body>
+</html>
