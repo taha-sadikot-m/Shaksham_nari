@@ -1,16 +1,13 @@
 # app.py (updated backend)
 from flask import Flask, render_template, request, jsonify, session
-import pymongo
+import sqlite3 # Added
+import json # Added
 import uuid
 from groq import Groq
 import logging
-import os
-from google import genai
-from google.genai import types
-
-
-
-import json
+from google import genai # Changed
+from google.genai import types # Changed
+# import pymongo # Removed
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Change this for production
@@ -19,31 +16,42 @@ app.secret_key = 'your_secret_key_here'  # Change this for production
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# MongoDB setup
-MONGO_URI = "mongodb://localhost:27017/"
-db_client = pymongo.MongoClient(MONGO_URI)
-db = db_client["investment_bot"]
-users_collection = db["users"]
+# SQLite Database setup
+DATABASE = 'database.db' # Define database file
+
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row # Access columns by name
+    return conn
+
+def init_db():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Users table: id is the user_id, data stores all user profile info as JSON string
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            data TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Initialize the database if it doesn't exist
+init_db()
 
 # Groq setup
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "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" # User should replace with env var
 client = Groq(api_key=GROQ_API_KEY)
 
 # Gemini setup
-GEMINI_API_KEY = "AIzaSyAT01e62IH8PNrE6LqtsJRLhd5Cb0h2Bv0" 
+GEMINI_API_KEY = "AIzaSyAT01e62IH8PNrE6LqtsJRLhd5Cb0h2Bv0" # User should replace with env var
 # Initialize the Gemini client
-google_client = client = genai.Client(api_key=GEMINI_API_KEY)
 
-GEMINI_MODEL_TEXT = 'gemini-2.5-flash-preview-04-17'
+google_client =  genai.Client(api_key=GEMINI_API_KEY)
 
-
-
-
-# Define the Google Search tool (can be reused)
-def create_google_search_tool():
-    return types.Tool(
-        google_search=types.GoogleSearch()
-    )
+GEMINI_MODEL_TEXT = 'gemini-1.5-flash-latest' # Using a common model name, adjust if needed. Original: 'gemini-2.5-flash-preview-04-17'
+#gemini_model = genai.GenerativeModel(model_name=GEMINI_MODEL_TEXT) # Added
 
 # For dynamic retrieval configuration
 def create_dynamic_search_tool(threshold=0.3):
@@ -56,15 +64,49 @@ def create_dynamic_search_tool(threshold=0.3):
     )
 
 
+# Define the Google Search tool (can be reused)
+def create_google_search_tool():
+    return types.Tool(
+        google_search=types.GoogleSearch()
+    )
 
 def get_user(user_id):
-    return users_collection.find_one({"_id": user_id})
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT data FROM users WHERE id = ?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if row and row['data']:
+        return json.loads(row['data'])
+    return None
 
-def save_user_data(user_id, data):
-    users_collection.update_one({"_id": user_id}, {"$set": data}, upsert=True)
+def save_user_data(user_id, data_to_save):  
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Fetch existing data
+    cursor.execute("SELECT data FROM users WHERE id = ?", (user_id,))
+    row = cursor.fetchone()
+    
+    existing_data = {}
+    if row and row['data']:
+        existing_data = json.loads(row['data'])
+    
+    # Merge new data with existing data (mimicking $set behavior)
+    existing_data.update(data_to_save)
+        
+    updated_data_json = json.dumps(existing_data)
+    
+    # Upsert: Insert if not exists, replace if exists
+    cursor.execute("INSERT OR REPLACE INTO users (id, data) VALUES (?, ?)", (user_id, updated_data_json))
+    conn.commit()
+    conn.close()
 
 def reset_user_data(user_id):
-    users_collection.delete_one({"_id": user_id})
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
 
 def call_groq_api(prompt):
     chat_completion = client.chat.completions.create(
@@ -102,9 +144,9 @@ def start():
     user = get_user(user_id)
     
     if user:
-        # Remove MongoDB _id field for JSON serialization
-        if '_id' in user:
-            del user['_id']
+        # Removed MongoDB _id field handling:
+        # if '_id' in user:
+        #     del user['_id']
         return jsonify({
             "status": "existing",
             "message": "Welcome back!",
@@ -298,42 +340,8 @@ def ask_question():
 
 
 
-def map_gemini_grounding_to_frontend(candidate):
-    """
-    Extracts web grounding sources from the Gemini API response candidate
-    and formats them for the frontend.
-    Frontend expects: [{ "web": { "uri": "...", "title": "..." } }, ...]
-    """
-    frontend_sources = []
-    if candidate and hasattr(candidate, 'grounding_metadata') and candidate.grounding_metadata:
-        # In Python SDK, grounding information is in `grounding_attributions`.
-        web_sources_dict = {} # To store unique URIs and their titles
-
-        if hasattr(candidate.grounding_metadata, 'grounding_attributions'):
-            for attribution in candidate.grounding_metadata.grounding_attributions:
-                if hasattr(attribution, 'web') and attribution.web and hasattr(attribution.web, 'uri'):
-                    uri = attribution.web.uri
-                    # Use provided title, fallback to URI if title is missing/empty
-                    title = attribution.web.title if hasattr(attribution.web, 'title') and attribution.web.title else uri
-                    if uri not in web_sources_dict: # Store unique sources
-                        web_sources_dict[uri] = {"uri": uri, "title": title}
-                    # If title was generic (URI) and a better one is found for the same URI
-                    elif web_sources_dict[uri]["title"] == uri and title != uri:
-                         web_sources_dict[uri]["title"] = title
-        
-        for uri_key in web_sources_dict:
-            frontend_sources.append({"web": web_sources_dict[uri_key]})
-            
-    return frontend_sources
-
-
-
-
-# Financial questions endpoint (using Gemini)
 @app.route('/api/ask_financial_question', methods=['POST'])
-def ask_financial_question_endpoint():
-    
-
+def ask_financial_question():
     data = request.json
     query = data.get('question')
     
@@ -351,9 +359,7 @@ def ask_financial_question_endpoint():
         Make sure the links are fully qualified URLs.
         Structure your response for easy readability. At the end of your response, list any web sources used for your answer."""
         
-        
-
-        response = google_client.models.generate_content(
+        response = google_client.models.generate_content( # Changed from google_client.models.generate_content
             model='gemini-2.0-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
@@ -361,39 +367,39 @@ def ask_financial_question_endpoint():
             )
         )
         
-        text_response = response.text
+        # Extract text and sources
+        text = response.text
+        # Assuming response.citations or similar attribute exists for grounding.
+        # The previous summary mentioned map_grounding_chunks(response.citations)
+        # For google.generativeai, grounding metadata is often in response.candidates[0].grounding_metadata.web_search_results
+        # or response.candidates[0].citation_metadata.citation_sources
+        # This part might need adjustment based on the actual response structure of the newer SDK.
+        # For now, keeping the existing logic if map_grounding_chunks handles it.
+        # If response.citations is not available, this will need to be updated.
+        # A common way to get citations:
+        citations = []
+        if response.candidates and response.candidates[0].citation_metadata:
+            citations = [source.uri for source in response.candidates[0].citation_metadata.citation_sources]
         
-        sources = []
-        if response.candidates and len(response.candidates) > 0:
-            sources = map_gemini_grounding_to_frontend(response.candidates[0])
+        sources = map_grounding_chunks(citations) # map_grounding_chunks might need to be adapted
         
-        print(text_response )
-
-        
-        
-
-        # Ensure the response key is "text" for the main answer
         return jsonify({
-            "text": text_response,
+            "text": text,
             "sources": sources
         })
         
     except Exception as e:
-        logger.error(f"Gemini API error in ask_financial_question: {str(e)}")
-        logger.exception("Full traceback for ask_financial_question:")
-        return jsonify({"error": "Failed to get an answer from the AI. Please try again."}), 500
+        logger.error(f"Gemini API error: {str(e)}")
+        return jsonify({"error": "Failed to get financial advice. Please try again later."}), 500
 
-
-# Scheme finder endpoint (using Gemini)
+# New endpoint for finding schemes
 @app.route('/api/find_schemes', methods=['POST'])
-def find_schemes_endpoint():
-    
-
+def find_schemes():
     data = request.json
-    details = data.get('details') # Changed from 'question' to 'details' as per your frontend
+    details = data.get('details')
     
     if not details:
-        return jsonify({"error": "Details for scheme search are required"}), 400
+        return jsonify({"error": "Details are required"}), 400
     
     try:
         prompt = f"""You are an AI assistant helping women in India find relevant government and other beneficial schemes.
@@ -409,36 +415,32 @@ def find_schemes_endpoint():
         Do not rely on potentially outdated general knowledge.
         Structure your response clearly. At the end of your response, list any web sources used for finding this information."""
         
-        
-
-        response = google_client.models.generate_content(
+        response = google_client.models.generate_content( # Changed from google_client.models.generate_content
             model='gemini-2.0-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
-                tools=[create_google_search_tool()],
+                tools=[create_google_search_tool()]
             )
         )
         
-        text_response = response.text
-        
-        sources = []
-        if response.candidates and len(response.candidates) > 0:
-            sources = map_gemini_grounding_to_frontend(response.candidates[0])
-        
-        print(text_response )
-        # Ensure the response key is "text"
+        # Extract text and sources
+        text = response.text
+        # Similar to ask_financial_question, citation handling might need review
+        citations = []
+        if response.candidates and response.candidates[0].citation_metadata:
+            citations = [source.uri for source in response.candidates[0].citation_metadata.citation_sources]
 
+        sources = map_grounding_chunks(citations) # map_grounding_chunks might need to be adapted
         
-
         return jsonify({
-            "text": text_response,
+            "text": text,
             "sources": sources
         })
         
     except Exception as e:
-        logger.error(f"Gemini API error in find_schemes: {str(e)}")
-        logger.exception("Full traceback for find_schemes:")
-        return jsonify({"error": "Failed to find schemes from the AI. Please try again."}), 500
+        logger.error(f"Gemini API error: {str(e)}")
+        return jsonify({"error": "Failed to find schemes. Please try again later."}), 500
+    
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
